@@ -2,14 +2,10 @@
 import AWS from 'aws-sdk';
 
 const s3 = new AWS.S3({
-  endpoint: 'http://localhost:9000',
-  accessKeyId: 'minioadmin',
-  secretAccessKey: 'minioadmin',
-  s3ForcePathStyle: true,
-  signatureVersion: 'v4',
-  // Ajoutez ces configurations supplémentaires
-  maxRetries: 3,
-  httpOptions: { timeout: 60000 }
+  accessKeyId: process.env.REACT_APP_AWS_ACCESS_KEY,
+  secretAccessKey: process.env.REACT_APP_AWS_SECRET_KEY,
+  region: process.env.REACT_APP_AWS_REGION,
+  signatureVersion: 'v4' // Important pour les URLs signées
 });
 
 export default s3;

@@ -48,26 +48,29 @@ const InvoiceViewer = () => {
             Prefix: prefix
           };
 
-          const data = await s3.listObjectsV2(params).promise();
+          // Dans le useEffect, remplacez la partie S3 par :
+const data = await s3.listObjectsV2({
+  Bucket: bucketName,
+  Delimiter: '/',
+  Prefix: currentPath.length > 0 ? currentPath.join('/') + '/' : ''
+}).promise();
 
-          // Récupération des dossiers
-          const folders = (data.CommonPrefixes || []).map(p => ({
-            name: p.Prefix.replace(prefix, '').replace('/', ''),
-            type: 'folder',
-            path: p.Prefix
-          }));
+const folders = (data.CommonPrefixes || []).map(p => ({
+  name: p.Prefix.replace(prefix, '').replace('/', ''),
+  type: 'folder',
+  path: p.Prefix
+}));
 
-          // Récupération des fichiers
-          const files = (data.Contents || [])
-            .filter(item => item.Key !== prefix)
-            .map(item => ({
-              name: item.Key.split('/').pop(),
-              type: item.Key.split('.').pop() === 'pdf' ? 'pdf' : 'image',
-              path: currentPath.join('/'),
-              fullPath: item.Key,
-              size: item.Size,
-              lastModified: item.LastModified
-            }));
+const files = (data.Contents || [])
+  .filter(item => item.Key !== prefix && !item.Key.endsWith('/'))
+  .map(item => ({
+    name: item.Key.split('/').pop(),
+    type: item.Key.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image',
+    path: currentPath.join('/'),
+    fullPath: item.Key,
+    size: item.Size,
+    lastModified: item.LastModified
+  }));
 
           setDocuments([...folders, ...files]);
         }
@@ -131,26 +134,38 @@ const InvoiceViewer = () => {
           name: doc.name,
           type: doc.type
         });
-      } else if (storageType === storageOptions.S3) {
-        // Correction cruciale pour éviter le téléchargement automatique
-        const url = await s3.getSignedUrlPromise('getObject', {
-          Bucket: bucketName,
-          Key: doc.fullPath,
-          Expires: 60 * 5, // 5 minutes
-          ResponseContentDisposition: 'inline' // Empêche le téléchargement forcé
-        });
-
-        // Solution alternative si le problème persiste
-        // const response = await fetch(url);
-        // const blob = await response.blob();
-        // const objectUrl = URL.createObjectURL(blob);
-
-        setPdfPreview({
-          url: url, // ou objectUrl pour la solution alternative
-          name: doc.name,
-          type: doc.type
-        });
+      } // Dans la fonction handleDocumentClick (remplacez toute la condition S3) :
+      else if (storageType === storageOptions.S3) {
+        if (doc.type === 'pdf') {
+          const params = {
+            Bucket: bucketName,
+            Key: doc.fullPath,
+            Expires: 3600 // 1 heure
+          };
+          
+          // Solution optimale pour l'affichage PDF
+          const url = await s3.getSignedUrlPromise('getObject', params);
+          setPdfPreview({
+            url: url,
+            name: doc.name,
+            type: 'pdf'
+          });
+        } else {
+          // Pour les images, utilisez directement l'URL signée
+          const params = {
+            Bucket: bucketName,
+            Key: doc.fullPath,
+            Expires: 3600
+          };
+          const url = await s3.getSignedUrlPromise('getObject', params);
+          setPdfPreview({
+            url: url,
+            name: doc.name,
+            type: 'image'
+          });
+        }
       }
+
     } catch (error) {
       console.error("Erreur lors du chargement:", error);
     }
