@@ -742,6 +742,13 @@ body {
   min-height: 0; /* Permet l'agrandissement vertical */
 }
 
+.document-viewer-fullscreen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
 .document-navigation {
   overflow-x: auto;
   background: #f1f3f4;
@@ -804,9 +811,16 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 15px;
+  padding: 10px 0;
+  margin-bottom: 10px;
   background: white;
   border-bottom: 1px solid #dadce0;
+}
+
+.invoice-viewer-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
 }
 
 .control-button {
@@ -818,8 +832,14 @@ body {
 }
 
 .zoom-controls button {
-  padding: 5px 10px;
-  background: #f1f3f4;
+  margin: 0 5px;
+  padding: 2px 10px;
+}
+
+.s3-browser-button, .browse-button {
+  padding: 8px 16px;
+  background-color: #4299e1;
+  color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -840,7 +860,8 @@ body {
   justify-content: center;
   align-items: center;
   color: #5f6368;
-  font-size: 16px;
+  font-size: 1.2rem;
+  height: 100%;
 }
 
 .loading {
